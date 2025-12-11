@@ -76,8 +76,31 @@ async def root():
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "parkinsons-api"}
+    """Health check endpoint with model status"""
+    from api.services.model_service import get_model_service
+    
+    try:
+        model_service = get_model_service()
+        model_loaded = model_service.model is not None
+        scaler_loaded = model_service.scaler is not None
+        protein_mapping_count = len(model_service.protein_mapping)
+        
+        return {
+            "status": "healthy",
+            "service": "parkinsons-api",
+            "version": settings.APP_VERSION,
+            "environment": settings.ENVIRONMENT,
+            "model_loaded": model_loaded,
+            "scaler_loaded": scaler_loaded,
+            "protein_mappings": protein_mapping_count,
+            "feature_count": len(model_service.feature_names) if model_service.feature_names else 0
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "service": "parkinsons-api",
+            "error": str(e)
+        }
 
 
 if __name__ == "__main__":

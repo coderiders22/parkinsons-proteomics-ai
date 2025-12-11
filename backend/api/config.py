@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     # App Settings
     APP_NAME: str = "Parkinson's Proteomics AI API"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # API Settings
     API_PREFIX: str = "/api/v1"
@@ -33,7 +34,14 @@ class Settings(BaseSettings):
     )
     
     # CORS Settings
-    CORS_ORIGINS: list = ["*"]
+    CORS_ORIGINS: list = [
+        "http://localhost:8081",
+        "exp://localhost:8081",
+        "http://localhost:19000",
+        "http://localhost:19001",
+        "http://localhost:19002",
+        os.getenv("FRONTEND_URL", "*"),
+    ]
     
     # Database Settings (for Django)
     DATABASE_URL: str = "sqlite:///./db.sqlite3"
