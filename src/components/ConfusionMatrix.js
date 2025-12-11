@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
     fontSize: SIZES.small,
     color: COLORS.darkGray,
     lineHeight: 20,
+    paddingRight: SIZES.xs,
   },
   matrixContainer: {
     backgroundColor: COLORS.white,

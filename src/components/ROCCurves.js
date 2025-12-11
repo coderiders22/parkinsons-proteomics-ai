@@ -115,10 +115,10 @@ export default function ROCCurves() {
           </View>
         </View>
         <Text style={styles.caption}>
-          Figure 10: ROC curve for the LightGBM classifier on the test set.
+          Figure 10: ROC curve for LightGBM classifier on test set.
         </Text>
         <Text style={styles.description}>
-          The ROC curve demonstrates a high AUC of 0.9794, confirming excellent discriminative ability.
+          High AUC of 0.9794 confirms excellent discriminative ability.
         </Text>
       </View>
     );
@@ -160,10 +160,10 @@ export default function ROCCurves() {
           </View>
         </View>
         <Text style={styles.caption}>
-          Figure 11: Precision-Recall curve for the LightGBM classifier on the test set.
+          Figure 11: Precision-Recall curve for LightGBM classifier on test set.
         </Text>
         <Text style={styles.description}>
-          The Precision-Recall curve shows an average precision (AP) of 0.9684, confirming stable performance even when focusing on the minority PD class.
+          Average precision (AP) of 0.9684 confirms stable performance.
         </Text>
       </View>
     );
@@ -182,8 +182,7 @@ export default function ROCCurves() {
       <View style={styles.header}>
         <Text style={styles.title}>ROC and Precision-Recall Analysis</Text>
         <Text style={styles.subtitle}>
-          The ROC curve demonstrates a high AUC of 0.9794, confirming excellent discriminative ability. 
-          The Precision-Recall curve shows an average precision (AP) of 0.9684, confirming stable performance even when focusing on the minority PD class.
+          ROC curve shows AUC of 0.9794. Precision-Recall shows AP of 0.9684, confirming stable performance.
         </Text>
       </View>
 
@@ -233,6 +232,7 @@ const styles = StyleSheet.create({
     fontSize: SIZES.small,
     color: COLORS.darkGray,
     lineHeight: 20,
+    paddingRight: SIZES.xs,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -278,6 +278,8 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: SIZES.xs,
   },
   chartTitle: {
     fontSize: SIZES.medium,
@@ -285,6 +287,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginBottom: SIZES.md,
     textAlign: 'center',
+    paddingHorizontal: SIZES.xs,
   },
   chart: {
     marginVertical: SIZES.sm,
@@ -296,11 +299,12 @@ const styles = StyleSheet.create({
     marginTop: SIZES.md,
     marginBottom: SIZES.sm,
     flexWrap: 'wrap',
+    paddingHorizontal: SIZES.xs,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: SIZES.md,
+    marginHorizontal: SIZES.sm,
     marginVertical: SIZES.xs,
   },
   legendDot: {
@@ -325,12 +329,15 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: SIZES.sm,
+    paddingHorizontal: SIZES.md,
+    lineHeight: 14,
   },
   description: {
     fontSize: SIZES.small,
     color: COLORS.darkGray,
     textAlign: 'center',
     marginTop: SIZES.xs,
+    paddingHorizontal: SIZES.md,
     lineHeight: 18,
   },
 });

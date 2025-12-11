@@ -120,7 +120,7 @@ export default function TrainingCurves() {
           Figure 8: AUC vs iterations for training and validation sets.
         </Text>
         <Text style={styles.description}>
-          The validation AUC stabilizes around 0.978, indicating good optimization and minimal overfitting.
+          Validation AUC stabilizes around 0.978, indicating good optimization.
         </Text>
       </View>
     );
@@ -176,7 +176,7 @@ export default function TrainingCurves() {
           Figure 9: Binary logloss vs iterations for training and validation sets.
         </Text>
         <Text style={styles.description}>
-          The validation logloss converges smoothly, indicating good optimization and minimal overfitting.
+          Validation logloss converges smoothly, indicating good optimization.
         </Text>
       </View>
     );
@@ -195,7 +195,7 @@ export default function TrainingCurves() {
       <View style={styles.header}>
         <Text style={styles.title}>Training Curves</Text>
         <Text style={styles.subtitle}>
-          Figures 8 and 9 illustrate the AUC and logloss evolution across training iterations.
+          AUC and logloss evolution across training iterations.
         </Text>
       </View>
 
@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
     fontSize: SIZES.small,
     color: COLORS.darkGray,
     lineHeight: 20,
+    paddingRight: SIZES.xs,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -290,6 +291,8 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: SIZES.xs,
   },
   chartTitle: {
     fontSize: SIZES.medium,
@@ -297,6 +300,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginBottom: SIZES.md,
     textAlign: 'center',
+    paddingHorizontal: SIZES.xs,
   },
   chart: {
     marginVertical: SIZES.sm,
@@ -307,11 +311,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: SIZES.md,
     marginBottom: SIZES.sm,
+    flexWrap: 'wrap',
+    paddingHorizontal: SIZES.xs,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: SIZES.md,
+    marginHorizontal: SIZES.sm,
+    marginVertical: SIZES.xs,
   },
   legendDot: {
     width: 12,
@@ -330,12 +337,15 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: SIZES.sm,
+    paddingHorizontal: SIZES.md,
+    lineHeight: 14,
   },
   description: {
     fontSize: SIZES.small,
     color: COLORS.darkGray,
     textAlign: 'center',
     marginTop: SIZES.xs,
+    paddingHorizontal: SIZES.md,
     lineHeight: 18,
   },
 });
