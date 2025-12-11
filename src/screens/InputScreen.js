@@ -28,7 +28,6 @@ export default function InputScreen({ navigation, route }) {
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   const categories = [
-    { id: 'demographics', label: 'Demographics', icon: 'person', color: '#667EEA' },
     { id: 'vitals', label: 'Vitals', icon: 'pulse', color: '#00D4AA' },
     { id: 'clinical', label: 'Clinical', icon: 'medkit', color: '#F5576C' },
     { id: 'lifestyle', label: 'Lifestyle', icon: 'fitness', color: '#FFB800' },
@@ -198,7 +197,7 @@ export default function InputScreen({ navigation, route }) {
             <View style={{ flex: 1 }}>
               <Text style={styles.uploadTitle}>Proteomics attached</Text>
               <Text style={styles.uploadSubtitle}>
-                {proteinData?.fileName || 'Excel/CSV'} • {proteinData?.total || 50} features detected
+                {proteinData?.fileName || 'Excel/CSV'} • {proteinData?.featureCount || proteinData?.total || 50} features detected
               </Text>
             </View>
             <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
@@ -220,14 +219,11 @@ export default function InputScreen({ navigation, route }) {
             </View>
             <Text style={styles.categoryTitle}>{currentCategory.label}</Text>
             <Text style={styles.categoryDescription}>
-              {currentCategory.id === 'demographics' && 'Basic patient information for demographic analysis'}
               {currentCategory.id === 'vitals' && 'Physical measurements and vital signs'}
               {currentCategory.id === 'clinical' && 'Clinical assessments and medical history'}
               {currentCategory.id === 'lifestyle' && 'Lifestyle factors and behavioral history'}
             </Text>
-            {currentCategory.id === 'demographics' && (
-              <Text style={styles.optionalNote}>Optional — main prediction uses the proteomics upload.</Text>
-            )}
+            <Text style={styles.optionalNote}>Optional — main prediction uses the proteomics upload.</Text>
           </Animated.View>
 
           {/* Form Fields */}
@@ -254,8 +250,6 @@ export default function InputScreen({ navigation, route }) {
             onPress={() => {
               // Fill with sample data for demo
               const sampleData = {
-                age: '65',
-                sex: 'Male',
                 bmi: '24.5',
                 systolic_bp: '130',
                 diastolic_bp: '85',

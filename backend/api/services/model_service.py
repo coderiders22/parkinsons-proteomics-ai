@@ -87,17 +87,41 @@ class ModelService:
         n_patients = len(data)
         print(f"📊 Received {n_patients} patients")
         
+        # Get required feature names from model
+        required_features = self.feature_names if self.feature_names else []
+        
         # Get numeric columns (seq_* biomarker columns)
         seq_cols = [c for c in data.columns if str(c).startswith("seq_")]
         if len(seq_cols) == 0:
             # Fallback to all numeric columns
             seq_cols = data.select_dtypes(include=[np.number]).columns.tolist()
         
-        if len(seq_cols) < 50:
-            raise ValueError(f"Expected 50 biomarkers, got {len(seq_cols)}")
-        
-        # Use first 50 columns
-        X_df = data[seq_cols[:50]].copy()
+        # Validate against required features if available
+        used_features = []
+        if required_features and len(required_features) > 0:
+            # Check if all required features are present
+            missing_features = [f for f in required_features if f not in data.columns]
+            if missing_features:
+                raise ValueError(
+                    f"Missing required features: {', '.join(missing_features[:10])}"
+                    f"{'...' if len(missing_features) > 10 else ''} "
+                    f"({len(missing_features)} of {len(required_features)} missing). "
+                    f"Please ensure your CSV contains all required columns."
+                )
+            # Use required features in correct order
+            X_df = data[required_features].copy()
+            used_features = required_features
+        else:
+            # Fallback: use seq_* columns
+            if len(seq_cols) < 50:
+                raise ValueError(
+                    f"Expected 50 biomarkers, got {len(seq_cols)}. "
+                    f"Required features: seq_* columns. "
+                    f"Found: {', '.join(seq_cols[:10])}{'...' if len(seq_cols) > 10 else ''}"
+                )
+            # Use first 50 columns
+            X_df = data[seq_cols[:50]].copy()
+            used_features = seq_cols[:50]
         
         # Validate against scaler expectation
         if hasattr(self.scaler, "n_features_in_"):
@@ -117,7 +141,7 @@ class ModelService:
         
         # Get global feature importances once
         feature_importances = self.model.feature_importances_
-        feature_names = seq_cols[:50]
+        feature_names = used_features
         
         # Build per-patient results
         patients = []
@@ -181,9 +205,10 @@ class ModelService:
                 "average_probability": avg_prob
             },
             "patients": patients,
-            "top_biomarkers": self._get_feature_importance(seq_cols[:50]),
-            "used_features": seq_cols[:50],
-            "feature_protein_map": {seq: self.protein_mapping.get(seq, seq) for seq in seq_cols[:50]}
+            "top_biomarkers": self._get_feature_importance(used_features),
+            "used_features": used_features,
+            "feature_count": len(used_features),
+            "feature_protein_map": {seq: self.protein_mapping.get(seq, seq) for seq in used_features}
         }
     
     def _get_risk_level(self, probability: float) -> str:

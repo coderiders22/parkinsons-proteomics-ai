@@ -13,27 +13,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import GlassmorphicCard from '../components/GlassmorphicCard';
-
-const generateSyntheticProteins = () => {
-  return Array.from({ length: 50 }).map((_, index) => {
-    const importance = Math.random() * 0.6 + 0.35; // 0.35 - 0.95
-    return {
-      id: `protein-${index + 1}`,
-      name: `Protein ${index + 1}`,
-      symbol: `P${index + 1}`,
-      importance: Math.min(1, importance),
-      category: index % 2 === 0 ? 'Neuroinflammation' : 'Synaptic Function',
-      description: 'Proteomic feature captured from uploaded sheet',
-      direction: index % 3 === 0 ? 'elevated' : 'decreased',
-      value: Math.random() * 2,
-    };
-  });
-};
+import { predictCSV } from '../services/modelService';
+import { getRequiredFeatures } from '../services/apiClient';
 
 export default function UploadScreen({ navigation, route }) {
   const { quickTest } = route?.params || {};
   const [selectedFile, setSelectedFile] = useState(null);
   const [proteinData, setProteinData] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const handlePick = async () => {
     try {
@@ -52,41 +39,136 @@ export default function UploadScreen({ navigation, route }) {
       const asset = result.assets?.[0];
       if (!asset) return;
 
-      // Demo parsing: generate synthetic 50-protein vector after "upload"
-      const proteins = generateSyntheticProteins();
-
+      setUploading(true);
       setSelectedFile({
         name: asset.name,
         size: asset.size,
+        uri: asset.uri,
+        mimeType: asset.mimeType || 'text/csv',
       });
-      setProteinData(proteins);
 
-      Alert.alert('Upload captured', '50 proteomic features ready for analysis.');
+      // Upload to backend
+      try {
+        // First, get required features from model
+        let requiredFeatures = [];
+        try {
+          const featuresResponse = await getRequiredFeatures();
+          requiredFeatures = featuresResponse?.features || [];
+        } catch (err) {
+          console.warn('Could not fetch required features:', err);
+        }
+
+        const response = await predictCSV({
+          uri: asset.uri,
+          name: asset.name,
+          mimeType: asset.mimeType || 'text/csv',
+        });
+
+        // Validate: Check if response indicates successful validation
+        if (response?.error) {
+          Alert.alert('Validation Error', response.error);
+          setSelectedFile(null);
+          setUploading(false);
+          return;
+        }
+
+        // Extract protein data from response
+        // Backend returns predictions for CSV - use first patient's data
+        if (response?.patients && response.patients.length > 0) {
+          // Use actual patient prediction data from CSV
+          const firstPatient = response.patients[0];
+          
+          // Extract features from patient data
+          const patientFeatures = firstPatient.features || {};
+          const usedFeatures = response.used_features || Object.keys(patientFeatures);
+          
+          // Create proteins from actual feature values
+          const proteins = response.top_biomarkers?.map((bio, index) => ({
+            id: `protein-${index + 1}`,
+            name: bio.protein_name || bio.name || bio.feature,
+            symbol: bio.feature || `P${index + 1}`,
+            importance: (bio.importance_pct || bio.importance || 0) / 100,
+            category: 'Proteomic Feature',
+            description: `Feature importance: ${(bio.importance_pct || 0).toFixed(1)}%`,
+            direction: 'elevated',
+            value: patientFeatures[bio.feature] || bio.importance || 0,
+          })) || [];
+
+          // Create allProteins from used features with actual values
+          const allProteins = usedFeatures.map((seq, idx) => ({
+            id: `protein-all-${idx}`,
+            name: response.feature_protein_map?.[seq] || seq,
+            symbol: seq,
+            importance: 0.5,
+            category: 'Proteomic Feature',
+            description: 'Proteomic feature from uploaded data',
+            direction: 'elevated',
+            value: patientFeatures[seq] || 1.0,
+          }));
+
+          // Validate features were actually detected
+          const detectedFeatures = response.used_features || response.summary?.used_features || [];
+          const featureCount = detectedFeatures.length || requiredFeatures.length;
+          
+          if (featureCount < 50 && requiredFeatures.length > 0) {
+            const missingFeatures = requiredFeatures.filter(f => !detectedFeatures.includes(f));
+            Alert.alert(
+              'Missing Features', 
+              `Only ${featureCount} of 50 required features detected.\n\nMissing: ${missingFeatures.slice(0, 5).join(', ')}${missingFeatures.length > 5 ? '...' : ''}\n\nPlease ensure your CSV has all 50 seq_* columns.`,
+              [{ text: 'OK' }]
+            );
+            setSelectedFile(null);
+            setUploading(false);
+            return;
+          }
+
+          const proteinDataObj = {
+            fileName: asset.name,
+            total: response.summary?.total_patients || 1,
+            featureCount: featureCount,
+            topProteins: proteins.slice(0, 10),
+            allProteins: allProteins,
+            backendResponse: response,
+            usedFeatures: detectedFeatures,
+          };
+
+          setProteinData(proteinDataObj);
+
+          // Directly navigate to Analysis - no patient intake form
+          navigation.navigate('Analysis', {
+            formData: {},
+            proteinData: proteinDataObj,
+          });
+        } else {
+          // No valid response - validation failed
+          Alert.alert(
+            'Validation Failed', 
+            'The uploaded file does not contain the required 50 protein features. Please check your CSV format.'
+          );
+          setSelectedFile(null);
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        const errorMsg = error.message || 'Could not process the file.';
+        if (errorMsg.includes('Expected 50') || errorMsg.includes('features') || errorMsg.includes('biomarkers')) {
+          Alert.alert(
+            'Invalid File Format', 
+            'Your CSV file must contain exactly 50 protein features (seq_* columns).\n\nPlease check:\n- Column names start with "seq_"\n- All 50 required features are present\n- Values are numeric'
+          );
+        } else {
+          Alert.alert('Upload failed', errorMsg);
+        }
+        setSelectedFile(null);
+      } finally {
+        setUploading(false);
+      }
     } catch (e) {
       Alert.alert('Upload failed', 'Could not read the file. Please try again.');
+      setUploading(false);
     }
   };
 
-  const handleContinue = () => {
-    if (!selectedFile || proteinData.length === 0) {
-      Alert.alert('Upload required', 'Please upload the proteomics Excel/CSV first.');
-      return;
-    }
-
-    const topProteins = [...proteinData]
-      .sort((a, b) => b.importance - a.importance)
-      .slice(0, 10);
-
-    navigation.navigate('Input', {
-      proteinData: {
-        fileName: selectedFile.name,
-        total: proteinData.length,
-        topProteins,
-        allProteins: proteinData,
-      },
-      quickTest: !!quickTest,
-    });
-  };
+  // Removed handleContinue - CSV upload directly goes to Analysis
 
   return (
     <LinearGradient
@@ -122,7 +204,12 @@ export default function UploadScreen({ navigation, route }) {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.uploadButton} activeOpacity={0.9} onPress={handlePick}>
+            <TouchableOpacity 
+              style={styles.uploadButton} 
+              activeOpacity={0.9} 
+              onPress={handlePick}
+              disabled={uploading}
+            >
               <LinearGradient
                 colors={[COLORS.accent, COLORS.accentDark]}
                 style={styles.uploadButtonBg}
@@ -131,7 +218,7 @@ export default function UploadScreen({ navigation, route }) {
               >
                 <Ionicons name="document-attach" size={20} color={COLORS.white} />
                 <Text style={styles.uploadText}>
-                  {selectedFile ? 'Replace file' : 'Upload Excel/CSV'}
+                  {uploading ? 'Uploading...' : selectedFile ? 'Replace file' : 'Upload Excel/CSV'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -143,7 +230,11 @@ export default function UploadScreen({ navigation, route }) {
                   <Text style={styles.fileName}>{selectedFile.name}</Text>
                 </View>
                 <Text style={styles.fileMeta}>
-                  {proteinData.length} proteins captured • ready for analysis
+                  {Array.isArray(proteinData) 
+                    ? `${proteinData.length} proteins captured`
+                    : proteinData.total 
+                      ? `${proteinData.total} features detected`
+                      : 'Ready for analysis'} • ready for analysis
                 </Text>
               </View>
             )}
@@ -168,17 +259,7 @@ export default function UploadScreen({ navigation, route }) {
             </View>
           </GlassmorphicCard>
 
-          <TouchableOpacity style={styles.continueButton} activeOpacity={0.9} onPress={handleContinue}>
-            <LinearGradient
-              colors={[COLORS.accent, COLORS.accentDark]}
-              style={styles.continueBg}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Text style={styles.continueText}>Proceed to Patient Intake</Text>
-              <Ionicons name="arrow-forward-circle" size={22} color={COLORS.white} />
-            </LinearGradient>
-          </TouchableOpacity>
+          {/* Removed - CSV upload directly goes to Analysis */}
 
           <Text style={styles.footer}>Designed and Developed by Manav Rai • All Rights Reserved</Text>
         </ScrollView>

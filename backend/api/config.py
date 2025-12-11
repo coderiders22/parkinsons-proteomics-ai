@@ -33,14 +33,21 @@ class Settings(BaseSettings):
         "scaler_20251211_093754.pkl"
     )
     
-    # CORS Settings
-    CORS_ORIGINS: list = [
+    # CORS Settings - Allow all origins in development
+    CORS_ORIGINS: list = ["*"] if os.getenv("ENVIRONMENT", "development") == "development" else [
         "http://localhost:8081",
-        "exp://localhost:8081",
         "http://localhost:19000",
         "http://localhost:19001",
         "http://localhost:19002",
-        os.getenv("FRONTEND_URL", "*"),
+        "http://localhost:19006",
+        "exp://localhost:8081",
+        "http://192.168.1.6:8081",
+        "exp://192.168.1.6:8081",
+        "http://192.168.1.6:19000",
+        "http://192.168.1.6:19001",
+        "http://192.168.1.6:19002",
+        "http://192.168.1.6:19006",
+        os.getenv("FRONTEND_URL", "http://localhost:8081"),
     ]
     
     # Database Settings (for Django)

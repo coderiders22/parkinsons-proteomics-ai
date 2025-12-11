@@ -21,7 +21,7 @@ import ConfidenceRing from '../components/ConfidenceRing';
 const { width } = Dimensions.get('window');
 
 export default function ResultScreen({ navigation, route }) {
-  const { prediction, formData, proteinData, topProteins } = route.params || {};
+  const { prediction, formData, proteinData, topProteins, backendResponse, apiError } = route.params || {};
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
@@ -29,9 +29,11 @@ export default function ResultScreen({ navigation, route }) {
   const ringAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
+  // Handle both backend response and fallback prediction
   const isPositive = prediction?.isPositive || false;
-  const confidence = prediction?.confidence || 0.85;
-  const riskLevel = prediction?.riskLevel || 'Moderate';
+  const confidence = prediction?.confidence || (prediction?.probability ? prediction.probability / 100 : 0.85);
+  const riskLevel = prediction?.riskLevel || prediction?.risk_level || 'Moderate';
+  const riskScore = prediction?.riskScore || (prediction?.probability ? prediction.probability / 100 : 0.39);
 
   useEffect(() => {
     // Main result animation sequence
@@ -58,7 +60,7 @@ export default function ResultScreen({ navigation, route }) {
 
     // Ring progress animation (using native driver with scaleX)
     Animated.timing(ringAnim, {
-      toValue: prediction?.riskScore || 0.39,
+      toValue: riskScore,
       duration: 2000,
       easing: Easing.out(Easing.ease),
       useNativeDriver: true, // Using scaleX transform instead of width
@@ -262,7 +264,7 @@ export default function ResultScreen({ navigation, route }) {
               <View style={styles.riskScoreContainer}>
                 <Text style={styles.riskScoreLabel}>Risk Score</Text>
                 <Text style={styles.riskScore}>
-                  {(prediction?.riskScore * 100).toFixed(0)}/100
+                  {(riskScore * 100).toFixed(0)}/100
                 </Text>
               </View>
             </View>
@@ -433,6 +435,16 @@ export default function ResultScreen({ navigation, route }) {
             />
           </GlassmorphicCard>
         </Animated.View>
+
+        {/* API Error Notice (if any) */}
+        {apiError && (
+          <View style={styles.errorNotice}>
+            <Ionicons name="warning" size={20} color={COLORS.warning} />
+            <Text style={styles.errorText}>
+              Using fallback prediction. Backend error: {apiError}
+            </Text>
+          </View>
+        )}
 
         {/* Actions */}
         <View style={styles.actions}>
@@ -1021,6 +1033,23 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: SIZES.xl,
+  },
+  errorNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 184, 0, 0.1)',
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    borderRadius: SIZES.radiusMd,
+    padding: SIZES.md,
+    marginBottom: SIZES.md,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: SIZES.sm,
+    color: COLORS.darkGray,
+    fontSize: SIZES.small,
+    fontWeight: '600',
   },
 });
 

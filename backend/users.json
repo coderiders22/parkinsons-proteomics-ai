@@ -1,1 +1,18 @@
-{"users": []}
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Test User",
+      "email": "test2@example.com",
+      "password_hash": "$pbkdf2-sha256$29000$E4Kw1jrnXKsVwjjn3JuTsg$I/U6yaln4E8Xha7zg5BeGscneNHf/XIwjOPlZ7DwwM4",
+      "created_at": "2025-12-11T23:17:57.893272"
+    },
+    {
+      "id": 2,
+      "name": "manav",
+      "email": "manavrai454@gmail.com",
+      "password_hash": "$pbkdf2-sha256$29000$wniv1bo3hnBurVUqxZhTag$EGxAheHBVZWm5I1rUTYxDOEau7Zzp016Z/Bcd.jUio4",
+      "created_at": "2025-12-11T23:18:57.551062"
+    }
+  ]
+}

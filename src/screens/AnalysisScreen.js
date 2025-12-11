@@ -91,22 +91,79 @@ export default function AnalysisScreen({ navigation, route }) {
     // Navigate to results after analysis
     const timer = setTimeout(async () => {
       try {
-        const res = await runInference({ formData, proteinData });
-        const prediction = res?.prediction || generatePrediction(formData, proteinData);
-        const topProteins = res?.topProteins?.length
-          ? res.topProteins
+        // Check if we already have predictions from CSV upload
+        let res;
+        if (proteinData?.backendResponse?.patients && proteinData.backendResponse.patients.length > 0) {
+          // Use predictions from CSV upload - no need to call /infer again
+          const firstPatient = proteinData.backendResponse.patients[0];
+          res = {
+            success: true,
+            prediction: firstPatient.prediction,
+            probability: firstPatient.probability,
+            risk_level: firstPatient.risk_level,
+            interpretation: firstPatient.interpretation,
+            confidence: firstPatient.confidence || (firstPatient.probability / 100),
+            top_biomarkers: proteinData.backendResponse.top_biomarkers,
+          };
+        } else {
+          // No CSV predictions, call inference API
+          res = await runInference({ formData: {}, proteinData });
+        }
+        
+        // Handle backend response format
+        let prediction;
+        if (res?.prediction !== undefined || res?.success) {
+          // Backend returns: { success, prediction, probability, risk_level, interpretation, confidence }
+          prediction = {
+            isPositive: res.prediction === 1,
+            confidence: res.confidence || (res.probability / 100),
+            riskScore: res.probability / 100,
+            riskLevel: res.risk_level || 'Moderate',
+            interpretation: res.interpretation || (res.prediction === 1 ? "Parkinson's Disease Risk Detected" : "Healthy"),
+          };
+        } else {
+          // Fallback to generated prediction (proteomics only, no demographics)
+          prediction = generatePrediction({}, proteinData);
+        }
+
+        // Extract top proteins from response or use provided data
+        const topProteins = res?.top_biomarkers?.length
+          ? res.top_biomarkers.map((bio, idx) => ({
+              id: `bio-${idx}`,
+              name: bio.protein_name || bio.name || bio.feature,
+              symbol: bio.feature || `P${idx}`,
+              importance: (bio.importance_pct || bio.importance || 0) / 100,
+              category: 'Proteomic Feature',
+              description: `Importance: ${(bio.importance_pct || 0).toFixed(1)}%`,
+              direction: 'elevated',
+              value: bio.importance || 0,
+            }))
           : proteinData?.topProteins?.length
             ? proteinData.topProteins
             : BIOMARKERS.slice(0, 10);
 
-        navigation.replace('Result', { prediction, formData, proteinData, topProteins });
+        navigation.replace('Result', { 
+          prediction, 
+          formData: {}, // No demographic data
+          proteinData, 
+          topProteins,
+          backendResponse: res,
+        });
       } catch (e) {
+        console.error('Analysis error:', e);
         // Surface failure clearly; keep app flowing.
-        const fallback = generatePrediction(formData, proteinData);
+        // Use proteomics-only fallback (no demographics)
+        const fallback = generatePrediction({}, proteinData);
         const topProteins = proteinData?.topProteins?.length
           ? proteinData.topProteins
           : BIOMARKERS.slice(0, 10);
-        navigation.replace('Result', { prediction: fallback, formData, proteinData, topProteins, apiError: e.message });
+        navigation.replace('Result', { 
+          prediction: fallback, 
+          formData: {}, 
+          proteinData, 
+          topProteins, 
+          apiError: e.message 
+        });
       }
     }, 5000);
 
@@ -117,34 +174,24 @@ export default function AnalysisScreen({ navigation, route }) {
   }, []);
 
   const generatePrediction = (data, proteins) => {
-    // Mock ML prediction logic based on input data
-    // In real app, this would call an actual ML model
-    let riskScore = 0.3; // Base risk
+    // Fallback prediction based ONLY on proteomics data
+    // Model prediction should come from backend, this is just a fallback
+    let riskScore = 0.5; // Neutral base
     
-    if (data?.age && parseInt(data.age) > 60) riskScore += 0.15;
-    if (data?.age && parseInt(data.age) > 70) riskScore += 0.1;
-    if (data?.family_history_pd === 'Yes') riskScore += 0.2;
-    if (data?.cognitive_score && parseInt(data.cognitive_score) < 24) riskScore += 0.15;
-    if (data?.smoking_history === 'Current') riskScore += 0.05;
-    
-    // Proteomics influence: tilt score based on uploaded signals
+    // Use ONLY proteomics data - no demographics
     if (proteins?.allProteins?.length) {
       const avgImportance =
         proteins.allProteins.reduce((sum, p) => sum + (p.importance || 0), 0) /
         proteins.allProteins.length;
-      // Center around 0.5, scale modestly
-      riskScore += (avgImportance - 0.5) * 0.25;
+      // Use proteomics importance directly
+      riskScore = Math.max(0.1, Math.min(0.9, avgImportance));
     }
 
-    // Add some randomness for demo
-    riskScore += (Math.random() * 0.2 - 0.1);
-    riskScore = Math.max(0.05, Math.min(0.95, riskScore));
-    
     const isPositive = riskScore > 0.5;
     
     return {
       isPositive,
-      confidence: isPositive ? riskScore : (1 - riskScore),
+      confidence: Math.abs(riskScore - 0.5) * 2, // Confidence based on distance from 0.5
       riskScore,
       riskLevel: riskScore > 0.7 ? 'High' : riskScore > 0.4 ? 'Moderate' : 'Low',
     };
