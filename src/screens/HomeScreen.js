@@ -15,6 +15,9 @@ import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 import { DATASET_STATS, MODEL_METRICS } from '../constants/data';
 import AdvancedNeuralNetwork from '../components/AdvancedNeuralNetwork';
 import GlassmorphicCard from '../components/GlassmorphicCard';
+import ConfusionMatrix from '../components/ConfusionMatrix';
+import TrainingCurves from '../components/TrainingCurves';
+import ROCCurves from '../components/ROCCurves';
 
 const { width } = Dimensions.get('window');
 
@@ -176,6 +179,19 @@ export default function HomeScreen({ navigation, route }) {
             index={3}
           />
         </View>
+
+        {/* Model Performance Visualizations */}
+        <GlassmorphicCard variant="light" style={styles.visualizationCard}>
+          <ConfusionMatrix />
+        </GlassmorphicCard>
+
+        <GlassmorphicCard variant="light" style={styles.visualizationCard}>
+          <TrainingCurves />
+        </GlassmorphicCard>
+
+        <GlassmorphicCard variant="light" style={styles.visualizationCard}>
+          <ROCCurves />
+        </GlassmorphicCard>
 
         {/* Advanced Neural Network Visualization */}
         <Text style={styles.sectionTitle}>Model Architecture</Text>
@@ -564,6 +580,11 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: SIZES.xl,
+  },
+  visualizationCard: {
+    marginBottom: SIZES.xl,
+    padding: 0,
+    overflow: 'hidden',
   },
 });
 
