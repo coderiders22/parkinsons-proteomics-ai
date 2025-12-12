@@ -1,3 +1,7 @@
+# Build tools (required for building packages)
+setuptools>=65.0.0
+wheel>=0.40.0
+
 # FastAPI & ASGI
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
@@ -9,21 +13,22 @@ django-cors-headers==4.3.1
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.0
 
-# ML Dependencies - using versions with pre-built wheels
-pandas==2.0.3
-numpy==1.24.3
-scikit-learn==1.3.0
-joblib==1.3.2
+# ML Dependencies - using versions compatible with Python 3.11
+pandas>=2.0.3
+numpy>=1.24.3,<2.0.0
+scikit-learn>=1.3.0
+joblib>=1.3.2
 
 # LightGBM - pre-built binary
-lightgbm==4.0.0
+lightgbm>=4.0.0
 
 # Utils
-python-dotenv==1.0.0
-pydantic==2.5.2
-pydantic-settings==2.1.0
-httpx==0.25.2
+python-dotenv>=1.0.0
+pydantic>=2.5.2
+pydantic-settings>=2.1.0
+httpx>=0.25.2
 
 # CORS & Security
-passlib[bcrypt]==1.7.4
-python-jose[cryptography]==3.3.0
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+email-validator>=2.0.0
