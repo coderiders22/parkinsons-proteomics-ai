@@ -24,13 +24,20 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     
     # Model Settings
-    MODEL_PATH: str = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "lgb_model_20251211_093754.pkl"
-    )
-    SCALER_PATH: str = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "scaler_20251211_093754.pkl"
+    # If model files are in backend/ directory (for Render deployment)
+    # Otherwise, they should be in repo root
+    _backend_dir = os.path.dirname(os.path.dirname(__file__))  # backend/
+    _repo_root = os.path.dirname(_backend_dir)  # repo root
+    
+    # Try backend/ first (for Render), then repo root
+    _model_in_backend = os.path.join(_backend_dir, "lgb_model_20251211_093754.pkl")
+    _model_in_root = os.path.join(_repo_root, "lgb_model_20251211_093754.pkl")
+    
+    MODEL_PATH: str = _model_in_backend if os.path.exists(_model_in_backend) else _model_in_root
+    SCALER_PATH: str = (
+        os.path.join(_backend_dir, "scaler_20251211_093754.pkl")
+        if os.path.exists(os.path.join(_backend_dir, "scaler_20251211_093754.pkl"))
+        else os.path.join(_repo_root, "scaler_20251211_093754.pkl")
     )
     
     # CORS Settings - Allow all origins in development
