@@ -10,13 +10,11 @@ import { Platform } from 'react-native';
 
 // Get the base URL based on platform
 const getBaseURL = () => {
-  if (Platform.OS === 'web') {
-    return 'http://localhost:8000';
-  } else {
-    // For mobile devices, use your machine's local IP
-    // Update this IP if your network changes
-    return 'http://192.168.1.6:8000';
-  }
+  // Production backend URL - deployed on Render
+  const PRODUCTION_BACKEND_URL = 'https://parkinsons-proteomics-ai.onrender.com';
+  
+  // Use production URL for both web and mobile
+  return PRODUCTION_BACKEND_URL;
 };
 
 const BASE_URL = getBaseURL();
