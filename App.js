@@ -13,6 +13,7 @@ import AnalysisScreen from './src/screens/AnalysisScreen';
 import ResultScreen from './src/screens/ResultScreen';
 import BiomarkersScreen from './src/screens/BiomarkersScreen';
 import AboutScreen from './src/screens/AboutScreen';
+import CognitiveScreen from './src/screens/CognitiveScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -37,6 +38,7 @@ export default function App() {
         <Stack.Screen name="Result" component={ResultScreen} />
         <Stack.Screen name="Biomarkers" component={BiomarkersScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen name="CognitiveImpairment" component={CognitiveScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

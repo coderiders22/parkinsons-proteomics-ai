@@ -147,6 +147,31 @@ export default function HomeScreen({ navigation, route }) {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* Cognitive Impairment Card */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('CognitiveImpairment')}
+          style={styles.cognitiveCard}
+        >
+          <LinearGradient
+            colors={['#667EEA', '#764BA2']}
+            style={styles.cognitiveGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.mainCardContent}>
+              <View style={[styles.mainCardIcon, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
+                <Text style={styles.mainCardEmoji}>🧠</Text>
+              </View>
+              <View style={styles.mainCardText}>
+                <Text style={styles.mainCardTitle}>Cognitive Impairment PD Detection</Text>
+                <Text style={styles.mainCardSubtitle}>Click here →</Text>
+              </View>
+              <Ionicons name="arrow-forward-circle" size={40} color={COLORS.white} />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
         {/* Stats Grid */}
         <Text style={styles.sectionTitle}>Model Performance</Text>
         <View style={styles.statsGrid}>
@@ -395,6 +420,15 @@ const styles = StyleSheet.create({
   mainCardSubtitle: {
     fontSize: SIZES.regular,
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  cognitiveCard: {
+    borderRadius: SIZES.radiusLg,
+    overflow: 'hidden',
+    marginBottom: SIZES.xl,
+    ...SHADOWS.large,
+  },
+  cognitiveGradient: {
+    padding: SIZES.lg,
   },
   sectionTitle: {
     fontSize: SIZES.medium,
